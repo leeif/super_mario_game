@@ -7,7 +7,7 @@ SuperMario.Preload.prototype = {
   preload: function() {
     //show loading screen
     //load game assets
-    this.load.tilemap('level1', 'asset/tilemap/super_mario_level_1.json', 
+    this.load.tilemap('level-1-1', 'asset/tilemap/super_mario_level_1.json', 
     	null, Phaser.Tilemap.TILED_JSON);
     this.load.image('background', 'asset/image/background-01.png');
     this.load.image('ground', 'asset/image/ground.png');

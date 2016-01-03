@@ -50,7 +50,7 @@ SuperMario.Game = function(){
 SuperMario.Game.prototype = {
 
   create: function() {
-    this.map = this.game.add.tilemap('level1');
+    this.map = this.game.add.tilemap('level-1-1');
 
     //the first parameter is the tileset name as specified in Tiled, the second is the key to the asset
     this.map.addTilesetImage('background', 'background');
@@ -83,14 +83,6 @@ SuperMario.Game.prototype = {
     this.cursors = this.game.input.keyboard.createCursorKeys();
     this.upCursorCounter = Utils.createCounter();
 
-  },
-
-  updatePlayerTexture : function(mario){
-    this.player.y = this.player.y - mario.height + this.player.height;
-    this.player.loadTexture(mario.sprite);
-    this.player.body.setSize(mario.width, mario.height, 
-      mario.offsetX, mario.offsetY);
-    this.player.type = mario.sprite;
   },
 
   createPlayer : function(mario){
@@ -182,8 +174,8 @@ SuperMario.Game.prototype = {
 
   update: function() {
     //collision
-    this.collision();
-    this.overlap();
+    this.updateCollision();
+    this.updateOverlap();
 
     //camera
     this.updateCameraX();
@@ -199,36 +191,7 @@ SuperMario.Game.prototype = {
     this.checkDroppingDead();
   },
 
-  restartGame : function(){
-    var taskId;
-    var self = this;
-    taskId = setInterval(function(){
-        self.state.start('game');
-        clearInterval(taskId);
-      }, 3000);
-  },
-
-  toggleWorld : function(){
-    var flag;
-    if(this.player.alive){
-      flag = false;
-    }else{
-      flag = true;
-    }
-    this.tools.setAll('alive', flag);
-    this.monsters.setAll('alive', flag);
-    this.player.alive = flag;
-  },
-
-  checkDroppingDead : function(){
-    if(this.player.alive && 
-        this.player.y > MapSize.size*MapSize.height - 80){
-      this.toggleWorld();
-      this.restartGame();
-    }
-  },
-
-  collision : function(){
+  updateCollision : function(){
 
     if(!this.player.alive){
       return;
@@ -351,25 +314,7 @@ SuperMario.Game.prototype = {
     }
   },
 
-  playBlockTween : function(block){
-    var self = this;
-    var tween = this.game.add.tween(block).to({y : '-10'}, 100, 
-      Phaser.Easing.Linear.None, false, 0, 0, true);
-
-    if(block.type === 'toolblock'){
-      block.loadTexture('block-03');
-    }
-    tween.onComplete.addOnce(function(){
-      if(block.type === 'toolblock'){
-        self.createTool(block);
-        block.type = 'blankblock';
-      }
-    });
-
-    tween.start();
-  },
-
-  overlap : function(){
+   updateOverlap : function(){
     this.game.physics.arcade.overlap(this.player, this.tools, 
       function(player, tool){
         tool.alive = false;
@@ -383,72 +328,12 @@ SuperMario.Game.prototype = {
     null, this);
   },
 
-  gettingBigger : function(){
-    var tween;
-    var self = this;
-    this.toggleWorld();
-    this.updatePlayerTexture(BigMario);
-    tween = this.game.add.tween(this.player).to({alpha : 0}, 
-      40, Phaser.Easing.Linear.None, false, 0, 3, true);
-    tween.onComplete.addOnce(function(){
-      self.toggleWorld(); 
-    });
-    tween.start();
-  },
-
-  gettingSmall : function(){
-    var self = this;
-    var gettingSmallTween;
-    var invincibleTween;
-
-    this.toggleWorld();
-    this.updatePlayerTexture(SmallMario);
-    
-    gettingSmallTween = this.game.add.tween(this.player).to({alpha : 0}, 
-      40, Phaser.Easing.Linear.None, false, 0, 3, true);
-    invincibleTween = this.game.add.tween(this.player).to({alpha : 0}, 
-        40, Phaser.Easing.Linear.None, false, 0, 35, true);
-
-    gettingSmallTween.onComplete.addOnce(function(){
-      self.toggleWorld();
-      invincibleTween.start();
-      self.player.invincible = true;
-    });
-
-    invincibleTween.onComplete.addOnce(function(){
-      self.player.invincible = false;
-    });
-
-    gettingSmallTween.start();
-  },
-
-  playerDead : function(){
-    var tween1;
-    var tween2;
-    this.player.loadTexture('deadMario');
-    this.toggleWorld();
-    tween1 = this.game.add.tween(this.player).to({y : '-20'}, 
-      150, Phaser.Easing.Linear.None);
-    tween2 = this.game.add.tween(this.player).to({y : '+800'}, 
-      1800, Phaser.Easing.Linear.None, false, 500);
-    tween1.chain(tween2);
-    tween1.start();
-    this.restartGame();
-  },
-
-  monsterDead : function(monster){
-    var self = this;
-    var taskId;
-    monster.alive = false;
-    monster.body.velocity.x = 0;
-    monster.animations.stop();
-    if(monster.type === 'kinoko'){
-      monster.frame = 2;
-      taskId = setInterval(function(){
-        self.monsters.remove(monster);
-        clearInterval(taskId);
-      }, 500);
-    }
+  updatePlayerTexture : function(mario){
+    this.player.y = this.player.y - mario.height + this.player.height;
+    this.player.loadTexture(mario.sprite);
+    this.player.body.setSize(mario.width, mario.height, 
+      mario.offsetX, mario.offsetY);
+    this.player.type = mario.sprite;
   },
 
   updateGroupVelocity : function(group){
@@ -622,6 +507,122 @@ SuperMario.Game.prototype = {
 
     if(this.player.body.x - this.camera.x < this.game.width/2){
       this.camera.x += this.player.body.x - this.camera.x - this.game.width/2;
+    }
+  },
+
+  restartGame : function(){
+    var taskId;
+    var self = this;
+    taskId = setInterval(function(){
+        self.state.start('game');
+        clearInterval(taskId);
+      }, 3000);
+  },
+
+  toggleWorld : function(){
+    var flag;
+    if(this.player.alive){
+      flag = false;
+    }else{
+      flag = true;
+    }
+    this.tools.setAll('alive', flag);
+    this.monsters.setAll('alive', flag);
+    this.player.alive = flag;
+  },
+
+  checkDroppingDead : function(){
+    if(this.player.alive && 
+        this.player.y > MapSize.size*MapSize.height - 80){
+      this.toggleWorld();
+      this.restartGame();
+    }
+  },
+
+
+  playBlockTween : function(block){
+    var self = this;
+    var tween = this.game.add.tween(block).to({y : '-10'}, 100, 
+      Phaser.Easing.Linear.None, false, 0, 0, true);
+
+    if(block.type === 'toolblock'){
+      block.loadTexture('block-03');
+    }
+    tween.onComplete.addOnce(function(){
+      if(block.type === 'toolblock'){
+        self.createTool(block);
+        block.type = 'blankblock';
+      }
+    });
+
+    tween.start();
+  },
+
+  gettingBigger : function(){
+    var tween;
+    var self = this;
+    this.toggleWorld();
+    this.updatePlayerTexture(BigMario);
+    tween = this.game.add.tween(this.player).to({alpha : 0}, 
+      40, Phaser.Easing.Linear.None, false, 0, 3, true);
+    tween.onComplete.addOnce(function(){
+      self.toggleWorld(); 
+    });
+    tween.start();
+  },
+
+  gettingSmall : function(){
+    var self = this;
+    var gettingSmallTween;
+    var invincibleTween;
+
+    this.toggleWorld();
+    this.updatePlayerTexture(SmallMario);
+    
+    gettingSmallTween = this.game.add.tween(this.player).to({alpha : 0}, 
+      40, Phaser.Easing.Linear.None, false, 0, 3, true);
+    invincibleTween = this.game.add.tween(this.player).to({alpha : 0}, 
+        40, Phaser.Easing.Linear.None, false, 0, 35, true);
+
+    gettingSmallTween.onComplete.addOnce(function(){
+      self.toggleWorld();
+      invincibleTween.start();
+      self.player.invincible = true;
+    });
+
+    invincibleTween.onComplete.addOnce(function(){
+      self.player.invincible = false;
+    });
+
+    gettingSmallTween.start();
+  },
+
+  playerDead : function(){
+    var tween1;
+    var tween2;
+    this.player.loadTexture('deadMario');
+    this.toggleWorld();
+    tween1 = this.game.add.tween(this.player).to({y : '-20'}, 
+      150, Phaser.Easing.Linear.None);
+    tween2 = this.game.add.tween(this.player).to({y : '+800'}, 
+      1800, Phaser.Easing.Linear.None, false, 500);
+    tween1.chain(tween2);
+    tween1.start();
+    this.restartGame();
+  },
+
+  monsterDead : function(monster){
+    var self = this;
+    var taskId;
+    monster.alive = false;
+    monster.body.velocity.x = 0;
+    monster.animations.stop();
+    if(monster.type === 'kinoko'){
+      monster.frame = 2;
+      taskId = setInterval(function(){
+        self.monsters.remove(monster);
+        clearInterval(taskId);
+      }, 500);
     }
   },
 
