@@ -1,5 +1,5 @@
 # SuperMario-Game
-##How To Play
+## How To Play
 ```
   npm install http-server -g
 ```
@@ -17,5 +17,5 @@
 ```
   open localhost:8080 in browser
 
-##Screen Shot Of The Game
+## Screen Shot Of The Game
 ![alt text](http://findlee.space/supermario/screenshot/screenshot-1.png "screenshot-1")
